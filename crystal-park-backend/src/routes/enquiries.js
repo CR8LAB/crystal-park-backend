@@ -141,10 +141,72 @@ router.get("/", requireAdmin, async (_req, res, next) => {
 
           ORDER BY
             e.created_at DESC
+
+            e.status,
+
+           e.completed_at AS "completedAt",
           `,
     );
 
     res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch("/:id/status", requireAdmin, async (req, res, next) => {
+  try {
+    const { status } = req.body;
+
+    if (!["new", "completed"].includes(status)) {
+      return res.status(400).json({
+        error: "Invalid enquiry status.",
+      });
+    }
+
+    const { rows } = await pool.query(
+      `
+      UPDATE enquiries
+      SET
+        status = $1,
+        completed_at = CASE
+          WHEN $1 = 'completed' THEN NOW()
+          ELSE NULL
+        END
+      WHERE id = $2
+      RETURNING *
+      `,
+      [status, req.params.id],
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        error: "Enquiry not found.",
+      });
+    }
+
+    res.json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete("/:id", requireAdmin, async (req, res, next) => {
+  try {
+    const { rowCount } = await pool.query(
+      "DELETE FROM enquiries WHERE id = $1",
+      [req.params.id],
+    );
+
+    if (!rowCount) {
+      return res.status(404).json({
+        error: "Enquiry not found.",
+      });
+    }
+
+    res.json({
+      message: "Enquiry deleted successfully.",
+    });
   } catch (err) {
     next(err);
   }
