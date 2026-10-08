@@ -109,44 +109,24 @@ router.post("/", async (req, res, next) => {
 
 router.get("/", requireAdmin, async (_req, res, next) => {
   try {
-    const { rows } = await pool.query(
-      `
-          SELECT
-
-            e.id,
-
-            u.unit_number
-              AS "unitNumber",
-
-            u.phase,
-
-            u.status
-              AS "unitStatus",
-
-            e.name,
-
-            e.phone,
-
-            e.email,
-
-            e.message,
-
-            e.created_at
-              AS "createdAt"
-
-          FROM enquiries e
-
-          JOIN units u
-            ON u.id = e.unit_id
-
-          ORDER BY
-            e.created_at DESC
-
-            e.status,
-
-           e.completed_at AS "completedAt",
-          `,
-    );
+    const { rows } = await pool.query(`
+      SELECT
+        e.id,
+        u.unit_number AS "unitNumber",
+        u.phase,
+        u.status AS "unitStatus",
+        e.name,
+        e.phone,
+        e.email,
+        e.message,
+        e.status,
+        e.completed_at AS "completedAt",
+        e.created_at AS "createdAt"
+      FROM enquiries e
+      JOIN units u
+        ON u.id = e.unit_id
+      ORDER BY e.created_at DESC
+    `);
 
     res.json(rows);
   } catch (err) {
