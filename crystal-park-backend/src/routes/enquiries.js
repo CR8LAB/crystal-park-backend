@@ -138,23 +138,28 @@ router.patch("/:id/status", requireAdmin, async (req, res, next) => {
   try {
     const { status } = req.body;
 
+    // Validate status
     if (!["new", "completed"].includes(status)) {
       return res.status(400).json({
         error: "Invalid enquiry status.",
       });
     }
 
+    // Update enquiry in Neon
     const { rows } = await pool.query(
       `
       UPDATE enquiries
       SET
-        status = $1,
+        status = $1::varchar,
         completed_at = CASE
-          WHEN $1 = 'completed' THEN NOW()
+          WHEN $1::varchar = 'completed' THEN NOW()
           ELSE NULL
         END
       WHERE id = $2
-      RETURNING *
+      RETURNING
+        id,
+        status,
+        completed_at
       `,
       [status, req.params.id],
     );
@@ -165,7 +170,10 @@ router.patch("/:id/status", requireAdmin, async (req, res, next) => {
       });
     }
 
-    res.json(rows[0]);
+    res.json({
+      message: "Enquiry updated successfully.",
+      enquiry: rows[0],
+    });
   } catch (err) {
     next(err);
   }
