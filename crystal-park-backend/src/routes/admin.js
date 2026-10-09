@@ -6,7 +6,7 @@ const { requireAdmin } = require("../middleware/auth");
 
 const router = express.Router();
 
-const VALID_STATUSES = ["available", "under_offer", "sold"];
+const VALID_STATUSES = ["available", "under_development", "sold"];
 
 // ========================================
 // SAFE PASSWORD COMPARISON
